@@ -28,6 +28,7 @@ do
 	ccid=$(sed -n "${value}p" $ccidlist)
         response1="Request has been execute successfully"
         response2="Insufficient Balance"
+	response3="ACTIVITY TIMEOUT"
 	echo "ccid is $ccid"
 	echo $ccid  >> xltran.txt
 	status=$(zgrep $ccid $logfile | zgrep  'Response from XL' | sed -e 's/.*responseDesc\(.*\)responseDesc.*/\1/' | sed -e 's/[^a-zA-Z*0-9-]/ /g;s/  */ /g')
@@ -43,10 +44,7 @@ do
 			echo "response2"
                         echo $status >> xltran.txt
                         ;;
-                "")
-                        echo "ccid not present" >> xltran.txt
-                        ;;
-                *)
+                *$response3*)
 			echo "Activity timeout occurred"
                         status1=$(zgrep $ccid $logfile | zgrep  'Response from XL' | sed -e 's/.*message\(.*\)message.*/\1/' | sed -e 's/[^a-zA-Z*0-9-]/ /g;s/  */ /g')
 			
@@ -56,6 +54,13 @@ do
 			status=$(curl -H 'Accept: application/xml' -H 'Content-Type: application/xml' -X GET http://172.30.120.32:9006/BusinessServices/svcBilPaymentCarrierBilling/V1.0/opCheckStatus/?transactionId="$xltransid" | sed -n 's|.*"responseDesc":"\([^"]*\)".*|\1|p' )
 			echo "activity timeout status is $status"
                         echo $status1$status >> xltran.txt
+			;;
+                "")
+                        echo "ccid not present" >> xltran.txt
+			;;
+		*)
+			echo $status >> xltran.txt
+			echo "Check the status" 
         esac
 
 
